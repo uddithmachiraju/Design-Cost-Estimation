@@ -1,0 +1,31 @@
+{
+    "name": "Design Estimation",
+    "dockerComposeFile": "docker-compose.yaml",
+    "service": "app", 
+	"workspaceFolder": "/workspace",
+
+    "features": {
+        "ghcr.io/devcontainers/features/python:1": {}
+    }, 
+
+    "forwardPorts": [
+        8000, // FastAPI 
+    ], 
+
+    "postCreateCommand": "pip install -r .devcontainer/requirements.txt --break-system-packages", 
+
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "GitHub.copilot",
+                "ms-vscode.makefile-tools",
+                "tamasfe.even-better-toml",
+                "ms-python.vscode-pylance",
+                "charliermarsh.ruff",
+                "mads-hartmann.bash-ide-vscode",
+                "emilast.logfilehighlighter",
+                "github.copilot-chat"
+            ]
+        }
+    }
+}
