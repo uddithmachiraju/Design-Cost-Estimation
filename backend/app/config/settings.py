@@ -44,7 +44,7 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = Field("INFO", description="Logging level")
 
     class Config:
-        env_file = str(Path(__file__).resolve().parents[2] / ".env")
+        env_file = str(Path(__file__).resolve().parents[3] / ".env")
         env_file_encoding = "utf-8"
 
 
