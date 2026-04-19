@@ -34,3 +34,23 @@ class UserLoginResponse(BaseModel):
     access_token: str = Field(..., description="JWT access token for the user")
     token_type: str = Field(..., description="Type of the token, typically 'bearer'")
     expire_in_minutes: int = Field(..., description="Expiration time of the access token in minutes")
+
+# ----------- Estimation Schemas -----------
+class NewEstimationRequest(BaseModel):
+    """Schema for creating a new estimation."""
+
+    component_name: str = Field(..., description="Name of the component to be estimated")
+    material: str = Field(..., description="Material of the component")
+    process: str = Field(..., description="Manufacturing process for the component")
+
+class NewEstimationResponse(BaseModel):
+    """Schema for the response after creating a new estimation."""
+
+    # id: uuid.UUID = Field(..., description="Unique identifier for the estimation")
+    estimation_code: str = Field(..., description="Unique code for the estimation")
+    component_name: str = Field(..., description="Name of the component")
+    material: str = Field(..., description="Material of the component")
+    process: str = Field(..., description="Manufacturing process for the component")
+    total_cost: float = Field(..., description="Total cost estimated for the component")
+    estimation_status: str = Field(..., description="Status of the estimation (e.g., draft, final, approved)")
+    created_at: str = Field(..., description="Timestamp when the estimation was created")
