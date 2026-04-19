@@ -5,11 +5,12 @@
 	"workspaceFolder": "/workspace",
 
     "features": {
-        "ghcr.io/devcontainers/features/python:1": {}
+        "ghcr.io/devcontainers/features/python:1": {}, 
+        "ghcr.io/devcontainers/features/node:1": {}
     }, 
 
     "forwardPorts": [
-        8000, // FastAPI 
+        8000 // FastAPI 
     ], 
 
     "postCreateCommand": "pip install -r .devcontainer/requirements.txt --break-system-packages", 

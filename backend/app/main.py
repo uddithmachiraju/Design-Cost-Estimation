@@ -3,8 +3,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy import text
 
 from app.api.routes import auth as auth_routes
+from app.api.routes import estimations as estimation_routes
 from app.config.logging import get_logger, setup_logging
 from app.config.settings import settings
 from app.db.database import Base, engine
@@ -18,6 +20,8 @@ async def lifespan(app: FastAPI):
     logger.info("app_starting", env=settings.ENV, version=settings.APP_VERSION)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        await conn.execute(text("CREATE SEQUENCE IF NOT EXISTS estimation_code_seq"))
+        await conn.execute(text("SELECT nextval('estimation_code_seq')"))
         logger.info("database_connected", env=settings.ENV,
                     version=settings.APP_VERSION)
     yield
@@ -37,6 +41,7 @@ app.add_middleware(CORSMiddleware, allow_origins=settings.CORS_ORIGIN, allow_met
 
 
 app.include_router(auth_routes.router, prefix="/auth", tags=["Authentication - Users"])
+app.include_router(estimation_routes.router, prefix="/api", tags=["Estimations"])
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
