@@ -3,11 +3,13 @@ import DrawingArea from './DrawingArea';
 import OverviewTab from './dashboard/OverviewTab';
 import EstimationsTab from './dashboard/EstimationsTab';
 import AnalyticsTab from './dashboard/AnalyticsTab';
+import NewEstimationForm from './dashboard/NewEstimationForm';
 import { Home, Image as ImageIcon, Calculator, Settings, PieChart, Folder, Users, Bell, ChevronLeft, ChevronRight, ChevronDown, Plus } from 'lucide-react';
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('Estimations');
   const [isSidebarHovered, setIsSidebarHovered] = useState(false);
+  const [isFabHovered, setIsFabHovered] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState({});
 
   const isSidebarOpen = isSidebarHovered;
@@ -123,36 +125,20 @@ const Dashboard = () => {
       {/* Main Content Area */}
       <div style={{ flex: 1, padding: '2rem 3rem', display: 'flex', flexDirection: 'column' }}>
         
-        {/* Header */}
-        <div style={{ marginBottom: '2rem' }}>
-          <h1 style={{ fontSize: '2rem', fontWeight: 700, color: '#1e293b', fontFamily: 'Outfit', margin: '0 0 0.5rem 0' }}>
-            My Dashboard
-          </h1>
-          <p style={{ color: '#64748b', fontSize: '1rem', margin: 0 }}>
-            Manage your design files, analyze parts, and view generated quotes.
-          </p>
-        </div>
+        {/* Header removed from here */}
 
-        {/* Tab Content Area */}
+          {/* Tab Content Area */}
         <div style={{ flex: 1, 
-          background: ['Overview', 'Cost Analytics', 'Estimations', 'Data'].includes(activeTab) ? 'transparent' : 'white', 
+          background: ['Overview', 'Cost Analytics', 'Estimations', 'Data', 'New Estimation'].includes(activeTab) ? 'transparent' : 'white', 
           borderRadius: activeTab === 'Overview' ? '0' : '1rem', 
-          padding: ['Overview', 'Cost Analytics', 'Estimations', 'Data'].includes(activeTab) ? '0' : '2rem', 
-          boxShadow: ['Overview', 'Cost Analytics', 'Estimations', 'Data'].includes(activeTab) ? 'none' : '0 4px 6px -1px rgba(0,0,0,0.05)', 
+          padding: ['Overview', 'Cost Analytics', 'Estimations', 'Data', 'New Estimation'].includes(activeTab) ? '0' : '2rem', 
+          boxShadow: ['Overview', 'Cost Analytics', 'Estimations', 'Data', 'New Estimation'].includes(activeTab) ? 'none' : '0 4px 6px -1px rgba(0,0,0,0.05)', 
           minHeight: '500px' 
         }}>
           
           {activeTab === 'Overview' && <OverviewTab />}
           {(activeTab === 'Estimations' || activeTab === 'Data') && <EstimationsTab />}
-          {activeTab === 'New Estimation' && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '400px', color: '#94a3b8' }}>
-              <div style={{ textAlign: 'center' }}>
-                <Calculator size={48} style={{ marginBottom: '1rem', opacity: 0.5, margin: '0 auto' }} />
-                <h3 style={{ color: '#1e293b' }}>New Estimation Builder</h3>
-                <p>This space will house the intelligent quoting engine form.</p>
-              </div>
-            </div>
-          )}
+          {activeTab === 'New Estimation' && <NewEstimationForm />}
           {activeTab === 'Cost Analytics' && <AnalyticsTab />}
           {activeTab === 'Drawings' && <DrawingArea />}
 
@@ -180,29 +166,50 @@ const Dashboard = () => {
         position: 'fixed',
         bottom: '2.5rem',
         right: '2.5rem',
-        width: '3.5rem',
+        width: isFabHovered ? '210px' : '3.5rem',
         height: '3.5rem',
-        borderRadius: '50%',
+        borderRadius: '2rem',
         background: '#0f766e',
         color: 'white',
         border: 'none',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        boxShadow: '0 10px 15px -3px rgba(15, 118, 110, 0.3), 0 4px 6px -2px rgba(15, 118, 110, 0.15)',
+        padding: 0,
+        boxShadow: isFabHovered 
+          ? '0 15px 20px -5px rgba(15, 118, 110, 0.4)'
+          : '0 10px 15px -3px rgba(15, 118, 110, 0.3), 0 4px 6px -2px rgba(15, 118, 110, 0.15)',
         cursor: 'pointer',
         zIndex: 50,
-        transition: 'transform 0.2s, box-shadow 0.2s'
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        transform: isFabHovered ? 'translateY(-2px)' : 'none',
+        overflow: 'hidden'
       }}
-      onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 15px 20px -5px rgba(15, 118, 110, 0.4)'; }}
-      onMouseOut={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(15, 118, 110, 0.3), 0 4px 6px -2px rgba(15, 118, 110, 0.15)'; }}
-      title="Create New Estimation"
+      onMouseEnter={() => setIsFabHovered(true)}
+      onMouseLeave={() => setIsFabHovered(false)}
       onClick={() => {
         setExpandedMenus(prev => ({ ...prev, Estimations: true }));
         setActiveTab('New Estimation');
       }}
       >
-        <Plus size={28} />
+        <Plus size={24} style={{ flexShrink: 0 }} />
+        <div style={{
+          overflow: 'hidden',
+          maxWidth: isFabHovered ? '150px' : '0',
+          opacity: isFabHovered ? 1 : 0,
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          display: 'flex',
+          alignItems: 'center'
+        }}>
+          <span style={{ 
+            fontSize: '0.95rem', 
+            fontWeight: 600, 
+            whiteSpace: 'nowrap',
+            paddingLeft: '0.5rem'
+          }}>
+            New Estimation
+          </span>
+        </div>
       </button>
     </>
   );

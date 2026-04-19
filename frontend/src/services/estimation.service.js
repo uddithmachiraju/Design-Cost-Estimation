@@ -71,5 +71,29 @@ export const estimationService = {
     }
 
     return response.json();
+  },
+
+  /**
+   * Create a new estimation request
+   * @param {Object} data - Contains component_name, material, process
+   */
+  async createEstimation(data) {
+    const token = localStorage.getItem('access_token');
+    const baseUrl = API_BASE_URL.replace('/v1', '');
+    const response = await fetch(`${baseUrl}/estimations`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : ''
+      },
+      body: JSON.stringify(data)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Failed to create estimation');
+    }
+
+    return response.json();
   }
 };

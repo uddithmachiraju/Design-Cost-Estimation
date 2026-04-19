@@ -52,9 +52,6 @@ const EstimationsTab = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
           <h2 style={{ fontSize: '1.25rem', color: '#1e293b', margin: 0 }}>Recent Estimations</h2>
-          <button style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1.25rem', background: '#0f766e', color: 'white', border: 'none', borderRadius: '0.5rem', cursor: 'pointer', fontWeight: 500, boxShadow: '0 4px 6px -1px rgba(15, 118, 110, 0.2)' }}>
-            <Plus size={18} /> New Estimation
-          </button>
         </div>
         
         <div style={{ display: 'flex', gap: '1rem' }}>
