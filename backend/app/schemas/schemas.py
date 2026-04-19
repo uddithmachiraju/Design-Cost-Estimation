@@ -46,7 +46,7 @@ class NewEstimationRequest(BaseModel):
 class NewEstimationResponse(BaseModel):
     """Schema for the response after creating a new estimation."""
 
-    # id: uuid.UUID = Field(..., description="Unique identifier for the estimation")
+    estimation_id: uuid.UUID = Field(..., description="Unique identifier for the estimation")
     estimation_code: str = Field(..., description="Unique code for the estimation")
     component_name: str = Field(..., description="Name of the component")
     material: str = Field(..., description="Material of the component")
@@ -54,3 +54,15 @@ class NewEstimationResponse(BaseModel):
     total_cost: float = Field(..., description="Total cost estimated for the component")
     estimation_status: str = Field(..., description="Status of the estimation (e.g., draft, final, approved)")
     created_at: str = Field(..., description="Timestamp when the estimation was created")
+
+class PreSignedURLRequest(BaseModel):
+    """Schema for requesting a pre-signed URL for file upload."""
+
+    filename: str = Field(..., description="Name of the file to be uploaded")
+    content_type: str = Field(..., description="MIME type of the file")
+    estimation_id: uuid.UUID = Field(..., description="Unique identifier for the estimation associated with the file upload")
+
+class PreSignedURLResponse(BaseModel):
+    """Schema for the response containing the pre-signed URL."""
+
+    presigned_url: str = Field(..., description="Pre-signed URL for uploading a file to S3")

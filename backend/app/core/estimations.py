@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from app.models.db_models import Estimations, EstimationStatus, EstimationVersions, User
-from app.schemas.schemas import NewEstimationRequest
+from app.schemas.schemas import NewEstimationRequest, NewEstimationResponse
 
 
 async def get_next_estimation_code(db: AsyncSession) -> str:
@@ -27,10 +27,10 @@ async def fetch_user_estimations(user: User, db: AsyncSession) -> list[Estimatio
     estimations = results.scalars().all()
     return estimations
 
-async def new_estimation(user: User, payload: NewEstimationRequest, db: AsyncSession) -> Estimations:
+async def new_estimation(user: User, payload: NewEstimationRequest, db: AsyncSession) -> NewEstimationResponse:
     """Create a new estimation for the authenticated user."""
     
-    new_estimation = Estimations(
+    estimation = Estimations(
         user_id=user.id,
         estimation_code=await get_next_estimation_code(db),
         component_name=payload.component_name,
@@ -40,11 +40,11 @@ async def new_estimation(user: User, payload: NewEstimationRequest, db: AsyncSes
         total_cost=Decimal("0.00"),
     )
 
-    db.add(new_estimation)
+    db.add(estimation)
     await db.flush()
 
     version = EstimationVersions(
-        estimation_id=new_estimation.id,
+        estimation_id=estimation.id,
         version_number=1,
         total_cost=Decimal("0.00"),
         created_by=user.id,
@@ -53,5 +53,41 @@ async def new_estimation(user: User, payload: NewEstimationRequest, db: AsyncSes
 
     db.add(version)
 
-    await db.refresh(new_estimation)
-    return new_estimation
+    await db.commit()
+    await db.refresh(estimation)
+
+    return NewEstimationResponse(
+        estimation_id=estimation.id,
+        estimation_code=estimation.estimation_code,
+        component_name=estimation.component_name,
+        material=estimation.material,
+        process=estimation.process,
+        total_cost=float(estimation.total_cost),
+        estimation_status=estimation.estimation_status.value,
+        created_at=estimation.created_at.isoformat(),
+    )
+
+async def fetch_estimation_by_id(estimation_id: str, user: User, db: AsyncSession) -> Estimations:
+    """Fetch a specific estimation by its ID for the authenticated user."""
+
+    result = await db.execute(
+        select(Estimations).where(Estimations.id == estimation_id, Estimations.user_id == user.id)
+    )
+
+    estimation = result.scalar_one_or_none()
+
+    return estimation
+
+async def fetch_estimation_version(estimation_id: str, user: User, db: AsyncSession) -> int:
+    """Fetch the latest version number for a specific estimation."""
+
+    version = await db.execute(
+        select(EstimationVersions)
+        .where(EstimationVersions.estimation_id == estimation_id)
+        .order_by(EstimationVersions.version_number.desc())
+        .limit(1)
+    )
+
+    version_obj = version.scalar_one()
+
+    return version_obj.version_number

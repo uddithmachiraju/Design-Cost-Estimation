@@ -40,6 +40,13 @@ class Settings(BaseSettings):
     SMTP_FROM_EMAIL: str = Field(..., description="Email address used as the sender for outgoing emails")
     EMAIL_VERIFY_EXPIRE_HOURS: int = Field(24, description="Expiration time for email verification tokens in hours")
 
+    # AWS S3 Settings
+    AWS_ACCESS_KEY_ID: str = Field(..., description="AWS access key ID for S3")
+    AWS_SECRET_ACCESS_KEY: str = Field(..., description="AWS secret access key for S3")
+    AWS_REGION: str = Field(..., description="AWS region for S3")
+    AWS_S3_BUCKET_NAME: str = Field(..., description="AWS S3 bucket name for storing files")
+    AWS_S3_FILE_EXPIRE_SECONDS: int = Field(3600, description="Expiration time for S3 presigned URLs in seconds")
+
     # Observability Settings
     LOG_LEVEL: str = Field("INFO", description="Logging level")
 
