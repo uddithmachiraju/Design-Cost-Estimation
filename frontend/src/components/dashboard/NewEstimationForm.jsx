@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { UploadCloud, FileType, CheckCircle2, ChevronRight, Loader2, AlertCircle } from 'lucide-react';
-import SmartDropdown from './SmartDropdown';
+import { AlertCircle, CheckCircle2, ChevronRight, Loader2, UploadCloud } from 'lucide-react';
+import { useState } from 'react';
 import { estimationService } from '../../services/estimation.service';
+import SmartDropdown from './SmartDropdown';
 
 const MaterialInlineForm = ({ onSave, onCancel }) => {
   const [localCost, setLocalCost] = useState('');
@@ -125,6 +125,10 @@ const NewEstimationForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!selectedFile) {
+      setError("Please select a design file to upload.");
+      return;
+    }
     setLoading(true);
     setError(null);
     setSuccess(false);
@@ -135,14 +139,22 @@ const NewEstimationForm = () => {
         material: formData.material,
         process: formData.process
       };
+      
+      // Step 1: Create estimation reference in DB
       const response = await estimationService.createEstimation(payload);
-      console.log("Estimation Created:", response);
+      
+      // Step 2: Get presigned URL using the DB estimation_id
+      const urlResponse = await estimationService.getPresignedUrl(response.estimation_id, selectedFile.name, selectedFile.type);
+      
+      // Step 3: Put the file data to S3 securely
+      await estimationService.uploadFileToS3(urlResponse.presigned_url, selectedFile);
+
       setSuccess(true);
       // Reset form on success
       setFormData({ componentName: '', material: '', process: '' });
       setSelectedFile(null);
     } catch (err) {
-      setError(err.message || 'Failed to create estimation. Please try again.');
+      setError(err.message || 'Failed to complete estimation request. Please try again.');
       console.error(err);
     } finally {
       setLoading(false);
@@ -238,23 +250,23 @@ const NewEstimationForm = () => {
             
             <button 
               type="submit"
-              disabled={!formData.componentName || !formData.material || !formData.process || loading}
+              disabled={!selectedFile || !formData.componentName || !formData.material || !formData.process || loading}
               style={{
                 width: '100%',
                 padding: '0.85rem',
-                backgroundColor: (!formData.componentName || !formData.material || !formData.process || loading) ? '#cbd5e1' : '#0f766e',
+                backgroundColor: (!selectedFile || !formData.componentName || !formData.material || !formData.process || loading) ? '#cbd5e1' : '#0f766e',
                 color: 'white',
                 border: 'none',
                 borderRadius: '0.5rem',
                 fontSize: '1rem',
                 fontWeight: 600,
-                cursor: (!formData.componentName || !formData.material || !formData.process || loading) ? 'not-allowed' : 'pointer',
+                cursor: (!selectedFile || !formData.componentName || !formData.material || !formData.process || loading) ? 'not-allowed' : 'pointer',
                 transition: 'all 0.2s',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '0.5rem',
-                boxShadow: (!formData.componentName || !formData.material || !formData.process || loading) ? 'none' : '0 4px 6px -1px rgba(15, 118, 110, 0.2)'
+                boxShadow: (!selectedFile || !formData.componentName || !formData.material || !formData.process || loading) ? 'none' : '0 4px 6px -1px rgba(15, 118, 110, 0.2)'
               }}
             >
               {loading ? <Loader2 size={18} className="animate-spin" /> : <>Analyze & Generate Quote <ChevronRight size={18} /></>}

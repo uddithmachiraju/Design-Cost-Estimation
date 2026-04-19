@@ -95,5 +95,57 @@ export const estimationService = {
     }
 
     return response.json();
+  },
+
+  /**
+   * Get a presigned URL for uploading a design file
+   * @param {string} estimationId - The UUID of the estimation
+   * @param {string} filename - The name of the file
+   * @param {string} contentType - The MIME type of the file
+   */
+  async getPresignedUrl(estimationId, filename, contentType) {
+    const token = localStorage.getItem('access_token');
+    const baseUrl = API_BASE_URL.replace('/v1', '');
+    const response = await fetch(`${baseUrl}/upload-url`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : ''
+      },
+      body: JSON.stringify({ estimation_id: estimationId, filename, content_type: contentType })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || 'Failed to generate upload URL');
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Uploads a file directly to S3 using a presigned URL
+   * @param {string} presignedUrl - The S3 presigned URL
+   * @param {File} file - The file object to upload
+   */
+  async uploadFileToS3(presignedUrl, file) {
+    console.log('Uploading file to S3...', presignedUrl);
+    // Convert to ArrayBuffer to prevent browser from injecting dynamic Content-Type
+    // which breaks AWS Signature verification if it wasn't signed for a specific type!
+    const buffer = await file.arrayBuffer();
+
+    const response = await fetch(presignedUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': file.type
+      },
+      body: buffer
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to upload file to S3');
+    }
+
+    return true;
   }
 };
