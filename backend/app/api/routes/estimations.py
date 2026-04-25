@@ -1,5 +1,6 @@
 from app.core.auth import get_current_user
 from app.core.estimations import (
+    create_estimation_file_record,
     fetch_estimation_by_id,
     fetch_estimation_version,
     fetch_user_estimations,
@@ -8,6 +9,7 @@ from app.core.estimations import (
 from app.db.database import get_db
 from app.models.db_models import User
 from app.schemas.schemas import (
+    EstimationFileMetadata,
     NewEstimationRequest,
     NewEstimationResponse,
     PreSignedURLRequest,
@@ -15,6 +17,7 @@ from app.schemas.schemas import (
 )
 from app.services.storage.s3_service import generate_presigned_url
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(tags=["Estimations"])
@@ -46,6 +49,30 @@ async def get_presigned_url(payload: PreSignedURLRequest, user: User = Depends(g
 
     version = await fetch_estimation_version(payload.estimation_id, user, db)
 
-    presigned_url = await generate_presigned_url(user_id=str(user.id), estimation_code=estimation.estimation_code, version=version, filename=payload.filename, content_type=payload.content_type)
+    presigned_url, file_key = await generate_presigned_url(user_id=str(user.id), estimation_code=estimation.estimation_code, version=version.version_number, filename=payload.filename, content_type=payload.content_type)
 
-    return PreSignedURLResponse(presigned_url=presigned_url)
+    return PreSignedURLResponse(presigned_url=presigned_url, file_key=file_key)
+
+@router.post("/confirm-upload", status_code=201)
+async def confirm_upload(payload: EstimationFileMetadata, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    """Confirm file upload and store metadata in DB."""
+
+    estimation = await fetch_estimation_by_id(payload.estimation_id, user, db)
+
+    if not estimation:
+        raise HTTPException(status_code=404, detail="Estimation not found")
+
+    version = await fetch_estimation_version(payload.estimation_id, user, db)
+
+    # Create file record
+    await create_estimation_file_record(
+        payload=payload,
+        version_id=version.id,
+        user=user,
+        db=db
+    )
+
+    return JSONResponse(
+        status_code=201,
+        content={"message": "File metadata recorded successfully"}
+    )

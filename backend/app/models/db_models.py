@@ -83,6 +83,8 @@ class Estimations(TimeStamp, Base):
     estimation_status: Mapped[EstimationStatus] = mapped_column(SAEnum(EstimationStatus), nullable=False, default=EstimationStatus.DRAFT)
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
 
+    files: Mapped[list["EstimationFiles"]] = relationship("EstimationFiles", back_populates="estimation", cascade="all, delete-orphan")
+
     user = relationship("User", back_populates="estimations")
     versions: Mapped[list["EstimationVersions"]] = relationship(back_populates="estimation", cascade="all, delete-orphan")
 
@@ -99,6 +101,8 @@ class EstimationVersions(TimeStamp, Base):
     total_cost: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
     created_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    files: Mapped[list["EstimationFiles"]] = relationship("EstimationFiles", back_populates="version", cascade="all, delete-orphan")
     
     estimation: Mapped["Estimations"] = relationship("Estimations", back_populates="versions")
 
@@ -107,3 +111,18 @@ class EstimationVersions(TimeStamp, Base):
         UniqueConstraint("estimation_id", "version_number", name="uq_estimation_version"),
     )
     
+class EstimationFiles(TimeStamp, Base):
+    """Model for storing files associated with cost estimations."""
+
+    __tablename__ = "estimation_files"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    estimation_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("estimations.id", ondelete="CASCADE"), nullable=False)
+    version_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("estimation_versions.id", ondelete="CASCADE"), nullable=False, index=True)
+    file_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    file_key: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
+    file_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    file_size: Mapped[int] = mapped_column(Integer, nullable=False)
+    estimation: Mapped["Estimations"] = relationship("Estimations", back_populates="files")
+    version: Mapped["EstimationVersions"] = relationship("EstimationVersions", back_populates="files")
+    uploaded_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)

@@ -66,3 +66,13 @@ class PreSignedURLResponse(BaseModel):
     """Schema for the response containing the pre-signed URL."""
 
     presigned_url: str = Field(..., description="Pre-signed URL for uploading a file to S3")
+    file_key: str = Field(..., description="Unique key for the file in S3, to be used for confirming the upload")
+
+class EstimationFileMetadata(BaseModel):
+    """Schema for confirming file upload and storing metadata in DB."""
+
+    estimation_id: str = Field(..., description="Unique identifier for the estimation associated with the file")
+    file_name: str = Field(..., description="Name of the uploaded file")
+    file_key: str = Field(..., description="Unique key for the uploaded file in S3")
+    file_type: str = Field(..., description="MIME type of the uploaded file")
+    file_size: int = Field(..., description="Size of the uploaded file in bytes")

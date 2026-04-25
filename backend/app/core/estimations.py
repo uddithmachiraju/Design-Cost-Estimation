@@ -4,8 +4,18 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from app.models.db_models import Estimations, EstimationStatus, EstimationVersions, User
-from app.schemas.schemas import NewEstimationRequest, NewEstimationResponse
+from app.models.db_models import (
+    EstimationFiles,
+    Estimations,
+    EstimationStatus,
+    EstimationVersions,
+    User,
+)
+from app.schemas.schemas import (
+    EstimationFileMetadata,
+    NewEstimationRequest,
+    NewEstimationResponse,
+)
 
 
 async def get_next_estimation_code(db: AsyncSession) -> str:
@@ -78,7 +88,7 @@ async def fetch_estimation_by_id(estimation_id: str, user: User, db: AsyncSessio
 
     return estimation
 
-async def fetch_estimation_version(estimation_id: str, user: User, db: AsyncSession) -> int:
+async def fetch_estimation_version(estimation_id: str, user: User, db: AsyncSession) -> EstimationVersions:
     """Fetch the latest version number for a specific estimation."""
 
     version = await db.execute(
@@ -90,4 +100,23 @@ async def fetch_estimation_version(estimation_id: str, user: User, db: AsyncSess
 
     version_obj = version.scalar_one()
 
-    return version_obj.version_number
+    return version_obj
+
+async def create_estimation_file_record(payload: EstimationFileMetadata, version_id: str, user: User, db: AsyncSession):
+    """Create a new estimation file record in the database."""
+
+    file = EstimationFiles(
+        estimation_id=payload.estimation_id,
+        version_id=version_id,
+        file_name=payload.file_name,
+        file_key=payload.file_key,
+        file_type=payload.file_type,
+        file_size=payload.file_size,
+        uploaded_by=user.id,
+    )
+
+    db.add(file)
+    await db.commit()
+    await db.refresh(file)
+
+    return file

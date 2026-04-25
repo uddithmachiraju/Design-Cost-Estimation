@@ -24,7 +24,7 @@ def generate_file_key(user_id: str, estimation_code: str, version: int, filename
     return f"{user_id}/{estimation_code}/{version}/{safe_filename}"
 
 
-async def generate_presigned_url(user_id: str, estimation_code: str, version: int, filename: str, content_type: str) -> str:
+async def generate_presigned_url(user_id: str, estimation_code: str, version: int, filename: str, content_type: str) -> tuple[str, str]:
     """Generate a presigned URL for uploading a file to S3."""
     
     file_key = generate_file_key(user_id, estimation_code, version, filename)
@@ -40,7 +40,7 @@ async def generate_presigned_url(user_id: str, estimation_code: str, version: in
             ExpiresIn=settings.AWS_S3_FILE_EXPIRE_SECONDS,
         )
         logger.info("generated_presigned_url", user_id=user_id, estimation_code=estimation_code, version=version, filename=filename)
-        return presigned_url
+        return presigned_url, file_key
     except Exception as e:
         logger.error("error_generating_presigned_url", user_id=user_id, estimation_code=estimation_code, version=version, filename=filename, error=str(e))
         raise RuntimeError(f"Error generating presigned URL: {str(e)}")
