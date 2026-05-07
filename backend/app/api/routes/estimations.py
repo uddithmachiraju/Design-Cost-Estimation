@@ -8,6 +8,7 @@ from app.core.estimations import (
 )
 from app.db.database import get_db
 from app.models.db_models import User
+from app.schemas.dxf_extraction import DXFExtractionRequest
 from app.schemas.schemas import (
     EstimationFileMetadata,
     NewEstimationRequest,
@@ -15,6 +16,7 @@ from app.schemas.schemas import (
     PreSignedURLRequest,
     PreSignedURLResponse,
 )
+from app.services.extraction.dxf_extractor import process_dxf
 from app.services.storage.s3_service import generate_presigned_url
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
@@ -38,7 +40,7 @@ async def create_estimation(payload: NewEstimationRequest, user: User = Depends(
 
     return result
 
-@router.post("/upload-url")
+@router.post("/upload-url", status_code=200)
 async def get_presigned_url(payload: PreSignedURLRequest, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)) -> PreSignedURLResponse:
     """Returns a presigned URL for uploading a file to S3."""
 
@@ -51,7 +53,10 @@ async def get_presigned_url(payload: PreSignedURLRequest, user: User = Depends(g
 
     presigned_url, file_key = await generate_presigned_url(user_id=str(user.id), estimation_code=estimation.estimation_code, version=version.version_number, filename=payload.filename, content_type=payload.content_type)
 
-    return PreSignedURLResponse(presigned_url=presigned_url, file_key=file_key)
+    return JSONResponse(
+        status_code=200,
+        content=PreSignedURLResponse(presigned_url=presigned_url, file_key=file_key).model_dump()
+    )
 
 @router.post("/confirm-upload", status_code=201)
 async def confirm_upload(payload: EstimationFileMetadata, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
@@ -76,3 +81,11 @@ async def confirm_upload(payload: EstimationFileMetadata, user: User = Depends(g
         status_code=201,
         content={"message": "File metadata recorded successfully"}
     )
+
+@router.post("/process-dxf", status_code=200)
+async def process_dxf_file(payload: DXFExtractionRequest, user: User = Depends(get_current_user)):
+    """Process a DXF file from S3 and return extracted geometry and cost metrics."""
+
+    result = await process_dxf(payload, user)
+
+    return JSONResponse(status_code=200, content=result)

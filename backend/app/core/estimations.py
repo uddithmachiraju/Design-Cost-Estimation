@@ -4,6 +4,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
+from app.config.logging import get_logger
 from app.models.db_models import (
     EstimationFiles,
     Estimations,
@@ -17,6 +18,7 @@ from app.schemas.schemas import (
     NewEstimationResponse,
 )
 
+logger = get_logger(__name__)
 
 async def get_next_estimation_code(db: AsyncSession) -> str:
     """Generate next estimation code like EST-0001"""
@@ -66,6 +68,8 @@ async def new_estimation(user: User, payload: NewEstimationRequest, db: AsyncSes
     await db.commit()
     await db.refresh(estimation)
 
+    logger.info("Created a new estimation for the user", user_id=str(user.id), estimation_id=str(estimation.id), component_name=estimation.component_name)
+
     return NewEstimationResponse(
         estimation_id=estimation.id,
         estimation_code=estimation.estimation_code,
@@ -89,7 +93,7 @@ async def fetch_estimation_by_id(estimation_id: str, user: User, db: AsyncSessio
     return estimation
 
 async def fetch_estimation_version(estimation_id: str, user: User, db: AsyncSession) -> EstimationVersions:
-    """Fetch the latest version number for a specific estimation."""
+    """Fetch the latest version object for a specific estimation."""
 
     version = await db.execute(
         select(EstimationVersions)
@@ -118,5 +122,6 @@ async def create_estimation_file_record(payload: EstimationFileMetadata, version
     db.add(file)
     await db.commit()
     await db.refresh(file)
+    logger.info("Created a new file record for the user file", user_id=str(user.id), estimation_id=payload.estimation_id, file_name=payload.file_name)
 
     return file

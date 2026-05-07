@@ -6,7 +6,7 @@ from app.config.settings import settings
 
 logger = get_logger(__name__)
 
-s3_client = boto3.client(
+s3_client: boto3.client = boto3.client(
     "s3",
     region_name=settings.AWS_REGION,
     aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
