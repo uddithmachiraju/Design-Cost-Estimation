@@ -158,13 +158,30 @@ const EstimationTool = () => {
                 </div>
                 
                 <div style={{ background: '#f8fafc', padding: '1.5rem', borderRadius: '12px', marginBottom: '2rem' }}>
-                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', fontSize: '0.85rem' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>Material Estimation</span>
-                    <span style={{ fontWeight: 600 }}>${result.breakdown.material}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', fontSize: '0.85rem' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Detailed Cost Breakdown</span>
+                    <span style={{ fontWeight: 600 }}>${result.estimatedCost.toFixed(2)}</span>
                   </div>
-                  <div style={{ width: '100%', height: '6px', background: '#e2e8f0', borderRadius: '10px', overflow: 'hidden' }}>
-                    <div style={{ width: '65%', height: '100%', background: 'var(--accent-primary)' }}></div>
+                  <div style={{ display: 'grid', gap: '0.75rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#0f766e' }}>
+                      <span>Material</span>
+                      <strong>${result.breakdown.material.toFixed(2)}</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#0f766e' }}>
+                      <span>Labor & Setup</span>
+                      <strong>${result.breakdown.labor.toFixed(2)}</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: '#0f766e' }}>
+                      <span>Overhead</span>
+                      <strong>${result.breakdown.overhead.toFixed(2)}</strong>
+                    </div>
                   </div>
+                </div>
+                <div style={{ background: '#f1f5f9', padding: '1.25rem', borderRadius: '12px', marginBottom: '2rem' }}>
+                  <p style={{ margin: 0, fontSize: '0.9rem', color: '#475569', lineHeight: 1.5 }}>
+                    This breakdown explains cost drivers in the quote: raw materials required, labor and machine effort, and overhead allocation.
+                    Use these line items to understand exactly why the estimated price was generated.
+                  </p>
                 </div>
 
                 <button className="btn-secondary" onClick={reset} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem' }}>

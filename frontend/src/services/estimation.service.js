@@ -147,5 +147,61 @@ export const estimationService = {
     }
 
     return true;
+  },
+
+  /**
+   * Confirm the file upload to S3 and store metadata in DB
+   * @param {Object} data - Contains estimation_id, file_name, file_key, file_type, file_size
+   */
+  async confirmUpload(data) {
+    console.log('Confirm Upload Payload:', data);
+    const token = localStorage.getItem('access_token');
+    const baseUrl = API_BASE_URL.replace('/v1', '');
+    const response = await fetch(`${baseUrl}/confirm-upload`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : ''
+      },
+      body: JSON.stringify(data)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Confirm Upload Error Data:', errorData);
+      const detail = typeof errorData.detail === 'string' ? errorData.detail : JSON.stringify(errorData.detail);
+      throw new Error(detail || 'Failed to confirm upload');
+    }
+
+    return response.json();
+  },
+
+  /**
+   * Request backend to process a DXF file stored in S3
+   * @param {string|null} bucket - The S3 bucket (optional, null uses backend default)
+   * @param {string} key - The S3 object key
+   * @param {Object} costConfig - Cost configuration parameters
+   */
+  async processDxf(bucket, key, costConfig = {}) {
+    console.log('Processing DXF Payload:', { bucket, key, costConfig });
+    const token = localStorage.getItem('access_token');
+    const baseUrl = API_BASE_URL.replace('/v1', '');
+    const response = await fetch(`${baseUrl}/process-dxf`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : ''
+      },
+      body: JSON.stringify({ file_key: key, cost_metrics: costConfig })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Process DXF Error Data:', errorData);
+      const detail = typeof errorData.detail === 'string' ? errorData.detail : JSON.stringify(errorData.detail);
+      throw new Error(detail || 'Failed to process DXF');
+    }
+
+    return response.json();
   }
 };

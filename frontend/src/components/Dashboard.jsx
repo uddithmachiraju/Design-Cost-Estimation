@@ -4,6 +4,7 @@ import OverviewTab from './dashboard/OverviewTab';
 import EstimationsTab from './dashboard/EstimationsTab';
 import AnalyticsTab from './dashboard/AnalyticsTab';
 import NewEstimationForm from './dashboard/NewEstimationForm';
+import AnalysisTab from './dashboard/AnalysisTab';
 import { Home, Image as ImageIcon, Calculator, Settings, PieChart, Folder, Users, Bell, ChevronLeft, ChevronRight, ChevronDown, Plus } from 'lucide-react';
 
 const Dashboard = () => {
@@ -11,6 +12,7 @@ const Dashboard = () => {
   const [isSidebarHovered, setIsSidebarHovered] = useState(false);
   const [isFabHovered, setIsFabHovered] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState({});
+  const [currentEstimationData, setCurrentEstimationData] = useState(null);
 
   const isSidebarOpen = isSidebarHovered;
 
@@ -28,6 +30,7 @@ const Dashboard = () => {
   return (
     <>
       <div className="animate-fade-in" style={{ display: 'flex', paddingTop: '80px', minHeight: '100vh', background: '#f8fafc' }}>
+
         
         {/* Sidebar / Vertical Navigation */}
       <div 
@@ -129,17 +132,40 @@ const Dashboard = () => {
 
           {/* Tab Content Area */}
         <div style={{ flex: 1, 
-          background: ['Overview', 'Cost Analytics', 'Estimations', 'Data', 'New Estimation'].includes(activeTab) ? 'transparent' : 'white', 
+          background: ['Overview', 'Cost Analytics', 'Estimations', 'Data', 'New Estimation', 'Analysis'].includes(activeTab) ? 'transparent' : 'white', 
           borderRadius: activeTab === 'Overview' ? '0' : '1rem', 
-          padding: ['Overview', 'Cost Analytics', 'Estimations', 'Data', 'New Estimation'].includes(activeTab) ? '0' : '2rem', 
-          boxShadow: ['Overview', 'Cost Analytics', 'Estimations', 'Data', 'New Estimation'].includes(activeTab) ? 'none' : '0 4px 6px -1px rgba(0,0,0,0.05)', 
+          padding: ['Overview', 'Cost Analytics', 'Estimations', 'Data', 'New Estimation', 'Analysis'].includes(activeTab) ? '0' : '2rem', 
+          boxShadow: ['Overview', 'Cost Analytics', 'Estimations', 'Data', 'New Estimation', 'Analysis'].includes(activeTab) ? 'none' : '0 4px 6px -1px rgba(0,0,0,0.05)', 
           minHeight: '500px' 
         }}>
           
           {activeTab === 'Overview' && <OverviewTab />}
-          {(activeTab === 'Estimations' || activeTab === 'Data') && <EstimationsTab />}
-          {activeTab === 'New Estimation' && <NewEstimationForm />}
+          {(activeTab === 'Estimations' || activeTab === 'Data') && (
+            <EstimationsTab 
+              onViewEstimation={(est) => {
+                setCurrentEstimationData({
+                  estimation_code: est.id,
+                  name: est.name,
+                  metadata: {
+                    component_name: est.name,
+                    material: est.material,
+                    process: est.process
+                  }
+                });
+                setActiveTab('Analysis');
+              }} 
+            />
+          )}
+          {activeTab === 'New Estimation' && (
+            <NewEstimationForm 
+              onSuccess={(data) => {
+                setCurrentEstimationData(data);
+                setActiveTab('Analysis');
+              }}
+            />
+          )}
           {activeTab === 'Cost Analytics' && <AnalyticsTab />}
+          {activeTab === 'Analysis' && <AnalysisTab data={currentEstimationData} onBack={() => setActiveTab('Estimations')} />}
           {activeTab === 'Drawings' && <DrawingArea />}
 
           {/* Placeholders for new tabs */}
@@ -162,6 +188,7 @@ const Dashboard = () => {
       </div>
       
       {/* Global Floating Action Button */}
+      {(activeTab !== 'Analysis' && activeTab !== 'New Estimation') && (
       <button style={{
         position: 'fixed',
         bottom: '2.5rem',
@@ -211,6 +238,7 @@ const Dashboard = () => {
           </span>
         </div>
       </button>
+      )}
     </>
   );
 };

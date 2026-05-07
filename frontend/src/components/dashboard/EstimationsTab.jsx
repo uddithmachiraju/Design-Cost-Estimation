@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Edit2, FileText, Download, MoreVertical, Search, Filter, Plus } from 'lucide-react';
 import { estimationService } from '../../services/estimation.service';
 
-const EstimationsTab = () => {
+const EstimationsTab = ({ onViewEstimation }) => {
   const [estimations, setEstimations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -100,7 +100,22 @@ const EstimationsTab = () => {
               estimations.map((est, i) => (
                 <tr key={est.id || i} style={{ borderBottom: i === estimations.length - 1 ? 'none' : '1px solid #e2e8f0', background: 'white' }}>
                   <td style={{ padding: '1rem 1.5rem', fontSize: '0.9rem', color: '#64748b' }}>{est.id}</td>
-                  <td style={{ padding: '1rem 1.5rem', fontSize: '0.95rem', fontWeight: 500, color: '#0f766e' }}>{est.name}</td>
+                  <td style={{ padding: '1rem 1.5rem', fontSize: '0.95rem', fontWeight: 500 }}>
+                    <button 
+                      onClick={() => onViewEstimation && onViewEstimation(est)}
+                      style={{ 
+                        background: 'none', 
+                        border: 'none', 
+                        color: '#0f766e', 
+                        padding: 0, 
+                        font: 'inherit', 
+                        cursor: 'pointer', 
+                        textDecoration: 'underline' 
+                      }}
+                    >
+                      {est.name}
+                    </button>
+                  </td>
                   <td style={{ padding: '1rem 1.5rem', fontSize: '0.95rem', fontWeight: 600, color: '#1e293b' }}>{est.cost}</td>
                   <td style={{ padding: '1rem 1.5rem' }}>
                     <div style={{ fontSize: '0.9rem', color: '#1e293b' }}>{est.material}</div>
