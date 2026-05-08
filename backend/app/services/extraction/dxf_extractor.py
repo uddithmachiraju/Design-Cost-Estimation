@@ -3,6 +3,7 @@ import os
 import tempfile
 import time
 
+from annotated_types import doc
 import ezdxf
 from ezdxf.document import Drawing
 
@@ -89,6 +90,45 @@ async def _parse_dxf(path: str) -> tuple[Drawing, list[str]]:
         raise ValueError("Failed to parse DXF file: " + str(e))
 
 
+async def _extract_geometry(doc: Drawing) -> dict:
+    """Extract geometry data from the DXF document."""
+
+    geometry_data = {
+        "lines": [],
+        "circles": [],
+        "arcs": [],
+        "polylines": []
+    }
+
+    for entity in doc.entities:
+        if entity.dxftype() == "LINE":
+            geometry_data["lines"].append({
+                "start": (entity.dxf.start.x, entity.dxf.start.y, entity.dxf.start.z),
+                "end": (entity.dxf.end.x, entity.dxf.end.y, entity.dxf.end.z)
+            })
+        elif entity.dxftype() == "CIRCLE":
+            geometry_data["circles"].append({
+                "center": (entity.dxf.center.x, entity.dxf.center.y, entity.dxf.center.z),
+                "radius": entity.dxf.radius
+            })
+        elif entity.dxftype() == "ARC":
+            geometry_data["arcs"].append({
+                "center": (entity.dxf.center.x, entity.dxf.center.y, entity.dxf.center.z),
+                "radius": entity.dxf.radius,
+                "start_angle": entity.dxf.start_angle,
+                "end_angle": entity.dxf.end_angle
+            })
+        elif entity.dxftype() == "POLYLINE":
+            vertices = [(v.dxf.x, v.dxf.y, v.dxf.z) for v in entity.vertices]
+            geometry_data["polylines"].append({
+                "vertices": vertices,
+                "is_closed": bool(entity.is_closed)
+            })
+
+    return geometry_data
+    
+
+
 async def process_dxf(payload: DXFExtractionRequest, user: User) -> dict:
     """Process the DXF file based on the provided S3 key and cost metrics, and return the extracted data."""
 
@@ -124,18 +164,23 @@ async def process_dxf(payload: DXFExtractionRequest, user: User) -> dict:
             except Exception as e:
                 logger.error("failed to parse DXF file", user_id=str(user.id), file_key=payload.file_key, error=str(e))
                 raise ValueError("Failed to parse DXF file: " + str(e))
+            
+            try:
+                geometry_data = await _extract_geometry(doc)
+                logger.info("extracted geometry from DXF file", user_id=str(user.id), file_key=payload.file_key, geometry_summary={k: len(v) for k, v in geometry_data.items()})
+            except Exception as e:
+                logger.error("failed to extract geometry from DXF file", user_id=str(user.id), file_key=payload.file_key, error=str(e))
+                raise ValueError("Failed to extract geometry from DXF file: " + str(e))
                 
         elapsed = time.monotonic() - t0
         logger.info("completed DXF process", user_id=str(user.id), file_key=payload.file_key, elapsed_seconds=elapsed)
-
-        # if doc is None:
-        #     raise ValueError("DXF parsing failed - no document available")
 
         return {
             "dxf_version": doc.dxfversion,
             "num_entities": len(doc.entities),
             "audit_messages": audit_messages,
-            "cost_metrics": payload.cost_metrics
+            "cost_metrics": payload.cost_metrics, 
+            "geometry_data": geometry_data
         }
 
     except Exception as e:
